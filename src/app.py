@@ -27,43 +27,35 @@ CORS(app)
 setup_admin(app)
 
 # Handle/serialize errors like a JSON object
-
-
 @app.errorhandler(APIException)
 def handle_invalid_usage(error):
     return jsonify(error.to_dict()), error.status_code
 
 # generate sitemap with all your endpoints
-
-
 @app.route('/')
 def sitemap():
     return generate_sitemap(app)
 
 # Characters / people (all)
-
-
 @app.route('/characters', methods=['GET'])
 def all_characters():
-    all_characters = db.session.execute(select(characters)).scalars().all()
+    all_characters = db.session.execute(select(Characters)).scalars().all()
     results = list(
         map(lambda character: character.serialize(), all_characters))
 
     return jsonify(results), 200
 
 # Characters / people id
-
-
 @app.route('/characters/<int:characters_id>', methods=['GET'])
-def characters():
-    characters = db.session.execute(select(Characters)).scalars().all()
-    results = list(map(lambda character: character.serialize(), characters))
+def get_character(characters_id):
+    character = db.session.get(Characters, characters_id)
 
-    return jsonify(results), 200
+    if character is None:
+        return jsonify({"error": "Character not found"}), 404
+
+    return jsonify(character.serialize()), 200
 
 # Planets all
-
-
 @app.route('/planets', methods=['GET'])
 def all_planets():
     all_planets = db.session.execute(select(Planets)).scalars().all()
@@ -72,18 +64,16 @@ def all_planets():
     return jsonify(results), 200
 
 # Planets id
-
-
 @app.route('/planets/<int:planets_id>', methods=['GET'])
-def planets():
-    characters = db.session.execute(select(Characters)).scalars().all()
-    results = list(map(lambda character: character.serialize(), characters))
+def get_planet(planets_id):
+    planet = db.session.get(Planets, planets_id)
 
-    return jsonify(results), 200
+    if planet is None:
+        return jsonify({"error": "Planet not found"}), 404
+
+    return jsonify(planet.serialize()), 200
 
 # User
-
-
 @app.route('/users', methods=['GET'])
 def list_users():
     users = db.session.execute(select(User)).scalars().all()
@@ -93,8 +83,6 @@ def list_users():
     return jsonify(results), 200
 
 # Likes
-
-
 @app.route('/users/favorites', methods=['GET'])
 def user_favorites():
     first_user = db.session.execute(select(User)).scalars().first()
@@ -139,7 +127,7 @@ def add_character():
                            specie=body["specie"], height=body["height"])
     db.session.add(character)
     db.session.commit()
-    return jsonify(character.serialized()), 200
+    return jsonify(character.serialize()), 200
 
 
 # Post planet (add fav planet)
@@ -158,7 +146,7 @@ def add_planet():
                      climate=body["climate"], terrain=body["terrain"])
     db.session.add(planet)
     db.session.commit()
-    return jsonify(planet.serialized()), 200
+    return jsonify(planet.serialize()), 200
 
 # Delete character
 @app.route('/characters/<int:character_id>', methods=['DELETE'])

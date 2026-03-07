@@ -48,10 +48,7 @@ class Characters(db.Model):
         }
 
     def __repr__(self):
-        return "<Id %r>" % self.id 
-
-    def __repr__(self):
-        return "<Character %r>" % self.character_name
+        return "<Character id=%r name=%r>" % (self.id, self.character_name)
 
 
 class Planets(db.Model):
@@ -72,10 +69,7 @@ class Planets(db.Model):
         }
 
     def __repr__(self):
-        return "<Id %r>" % self.id
-
-    def __repr__(self):
-        return "<Planet %r>" % self.planet_name
+        return "<Planet id=%r name=%r>" % (self.id, self.planet_name)
 
 
 class Liked_Characters(db.Model):
