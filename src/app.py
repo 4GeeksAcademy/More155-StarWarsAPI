@@ -110,74 +110,64 @@ def user_favorites():
     }
     return jsonify(results), 200
 
-
-# Post Character (add fav character)
+# Post character (add fav character)
 @app.route('/characters', methods=['POST'])
 def add_character():
     body = request.get_json()
+    if "character_id" not in body or body["character_id"] == "":
+        return jsonify({"msg": "character_id is required"}), 400
 
-    if "character_name" not in body or body["character_name"] == "":
-        return jsonify({"msg": "character_name is required"}), 400
-    if "specie" not in body or body["specie"] == "":
-        return jsonify({"msg": "specie is required"}), 400
-    if "height" not in body or body["height"] == "":
-        return jsonify({"msg": "height is required"}), 400
-
-    character = Characters(character_name=body["character_name"],
-                           specie=body["specie"], height=body["height"])
-    db.session.add(character)
+    first_user = db.session.execute(select(User)).scalars().first()
+    liked = Liked_Characters(id_user=first_user.id, id_character=body["character_id"])
+    db.session.add(liked)
     db.session.commit()
-    return jsonify(character.serialize()), 200
-
+    return jsonify(liked.character.serialize()), 200
 
 # Post planet (add fav planet)
 @app.route('/planets', methods=['POST'])
 def add_planet():
     body = request.get_json()
+    if "planet_id" not in body or body["planet_id"] == "":
+        return jsonify({"msg": "planet_id is required"}), 400
 
-    if "planet_name" not in body or body["planet_name"] == "":
-        return jsonify({"msg": "planet_name is required"}), 400
-    if "climate" not in body or body["climate"] == "":
-        return jsonify({"msg": "climate is required"}), 400
-    if "terrain" not in body or body["terrain"] == "":
-        return jsonify({"msg": "terrain is required"}), 400
-
-    planet = Planets(planet_name=body["planet_name"],
-                     climate=body["climate"], terrain=body["terrain"])
-    db.session.add(planet)
+    first_user = db.session.execute(select(User)).scalars().first()
+    liked = Liked_Planets(id_user=first_user.id, id_planet=body["planet_id"])
+    db.session.add(liked)
     db.session.commit()
-    return jsonify(planet.serialize()), 200
+    return jsonify(liked.planet.serialize()), 200
 
-# Delete character
+# Delete fav character
 @app.route('/characters/<int:character_id>', methods=['DELETE'])
 def delete_character(character_id):
-    character = db.session.get(Characters, character_id)
-
-    if character is None:
+    first_user = db.session.execute(select(User)).scalars().first()
+    liked = db.session.execute(
+        select(Liked_Characters).where(
+            Liked_Characters.id_user == first_user.id,
+            Liked_Characters.id_character == character_id
+        )
+    ).scalars().first()
+    if liked is None:
         return jsonify({"msg": "Character not found"}), 404
-
-    db.session.delete(character)
+    db.session.delete(liked)
     db.session.commit()
-
-    response_body = {
-        "msg": "Character " + str(character_id) + " deleted."
-    }
+    response_body = {"msg": "Character " + str(character_id) + " deleted."}
     return jsonify(response_body), 200
 
-# Delete planet
+# Delete fav planet
 @app.route('/planets/<int:planet_id>', methods=['DELETE'])
 def delete_planet(planet_id):
-    planet = db.session.get(Planets, planet_id)
-
-    if planet is None:
+    first_user = db.session.execute(select(User)).scalars().first()
+    liked = db.session.execute(
+        select(Liked_Planets).where(
+            Liked_Planets.id_user == first_user.id,
+            Liked_Planets.id_planet == planet_id
+        )
+    ).scalars().first()
+    if liked is None:
         return jsonify({"msg": "Planet not found"}), 404
-
-    db.session.delete(planet)
+    db.session.delete(liked)
     db.session.commit()
-
-    response_body = {
-        "msg": "Planet " + str(planet_id) + " deleted."
-    }
+    response_body = {"msg": "Planet " + str(planet_id) + " deleted."}
     return jsonify(response_body), 200
 
 
